@@ -1,0 +1,18 @@
+# Copyright 2023
+#
+# SPDX-License-Identifier: MIT
+
+config DOCTEST
+	bool "Doctest unit testing framework"
+	default y
+  select CPLUSPLUS
+  select LIB_CPLUSPLUS
+  select EXCEPTIONS
+	help
+	  Enable the doctest unit testing framework (requires cpp).
+
+config DOCTEST_MAIN_VOID_RETURN
+	bool "Use a void return from main for doctest"
+	default n
+	help
+	  Older versions of zephyr required a void return from main.

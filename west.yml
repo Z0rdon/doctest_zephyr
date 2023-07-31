@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2023 
+
+manifest:
+  remotes:
+    - name: doctest_remote
+      url-base: https://github.com/doctest
+
+  projects:
+    - name: doctest
+      revision: v2.4.11
+      remote: doctest_remote
+      path: modules/lib/doctest

@@ -1,0 +1,202 @@
+#+title: doctest_zephyr: Better unit testing for Zephyr RTOS
+#+OPTIONS: ^:nil
+
+* Overview
+"doctest_zephyr" allows c/c++ code of a zephyr RTOS project to be elegantly unit tested.
+Test projects are directly generated using the zephyr build system.
+Tests are executed through zephyr's test runner (Twister).
+The tests can be executed using "native_posix" board execution.
+
+* What is [[https://github.com/zephyrproject-rtos/zephyr][Zephyr RTOS]]?
+The Zephyr Real Time Operating System is a modern OS for microcontrollers.
+Zephyr is used by cool, good looking people who have a keen sense of humor.
+
+* What is [[https://github.com/doctest/doctest][doctest]]?
+doctest is a clean, fast, header only testing framework written in C++.
+Compiling and execution of doctest tests is as fast as lightning.
+doctest facilitates the development of clean, maintainable unit tests for c and c++.
+doctest is much easier to use than other frameworks like ztest, unity, gtest, and even catch(2).
+You can unit test "regular" c code with doctest.
+
+* Why would I use "doctest_zephyr" for my unit testing?
+Let's first examine some other common unit testing approaches taken with zephyr projects.
+** [[https://docs.zephyrproject.org/latest/develop/test/ztest.html][ztest]]
+Do you like going to the dentist? If you do, you probably also like to use ztest.
+The ztest API is similar to "throwtheswitch Unity", except much more grotesque.
+There is a large amount of boilerplate to set up a test, and the required test registration maintenance is evil.
+** Adding another testing framework into a zephyr-based project
+It is totally possible to integrate a different testing framework into your zephyr based project.
+But one would have to perform the following work items:
+  1. Get the framework to build within your zephyr based project.
+  2. Create the Twister harness to parse the test results
+  3. Split your framework integration into its own zephyr driver for reuse
+  4. Integrate your framework into a zephyr module so the framework itself can receive updates from upstream
+  5. Wallow in self pity
+Whereas "doctest_zephyr" has done all of this work for you already!
+** Host-only testing framework.
+Another possibility for unit testing is to execute select portions of code "offline" on a host computer.
+This method involves trying to "shoehorn" your zephyr-based project code into another test framework and not use zephyr's build system.
+these tests often require a large amount of faking/mocking zephyr functionality, and become very hard to maintain.
+** The advantage of "doctest_zephyr" 
+Your unit tests will be clean and maintainable.
+you get the intuitive test cases of doctest while working with the zephyr build system.
+Test execution, performed by Twister, becomes trivial to integrate into CI.
+The doctest framework is able to be updated because doctest itself is brought in to the parent manifest as a zephyr module.
+
+* Configuring a test project
+** Integration of doctest_zephyr into your custom zephyr manifest
+   Here is an example parent manifest west.yml, where the doctest_zephyr submanifest is imported to bring in the doctest module.
+   #+BEGIN_SRC yaml
+     manifest:
+       remotes:
+         - name: zephyrproject-rtos
+           url-base: https://github.com/zephyrproject-rtos
+         - name: space-wizard
+           url-base: https://github.com/Z0rdon
+
+       projects:
+         - name: zephyr
+           remote: zephyrproject-rtos
+           revision: v3.4.0
+           import: true
+
+         - name: doctest_zephyr
+           revision: v1.0.0
+           import: true
+           remote: space-wizard
+           path: yolo_manifest/drivers/doctest_zephyr
+
+       self:
+         path: yolo_manifest
+   #+END_SRC
+** Test project structure
+   The test project should have the following structure:
+   #+BEGIN_EXAMPLE
+tests/
+  - my_test_project
+    + prj.conf
+    + testcase.yaml
+    + CMakeLists.txt
+    + src/
+  - my_second_test_project
+    ...
+#+END_EXAMPLE
+
+** Configuration requirements
+   First and foremost, add 'CONFIG_DOCTEST' to your test project's 'prj.conf'.
+   doctest uses c++. You can select which version of c++ is appropriate for your project using a config option.
+   Please review the c++ limitations for zephyr [[https://docs.zephyrproject.org/3.1.0/develop/languages/cpp/index.html][here]]
+   
+   Please also remember to wrap your c headers with the appropriate guards:
+   #+BEGIN_SRC c
+     #ifdef __cplusplus
+     extern "C" {
+     #endif // c++
+       ...
+     #ifdef __cplusplus
+     }
+     #endif // c++
+   #+END_SRC
+   
+   Example prj.conf:
+   #+BEGIN_EXAMPLE
+     CONFIG_DOCTEST=y
+     CONFIG_STD_CPP17=y
+   #+END_EXAMPLE
+
+** CMake
+   Code under test can either be brought in with a custom zephyr driver config in prj.conf, or CMake can be used to manually bring in files.
+   Example CMakeLists.txt:
+   #+BEGIN_EXAMPLE
+     # Copyright 2023 
+     # SPDX-License-Identifier: MIT
+     cmake_minimum_required(VERSION 3.20.0)
+
+     # Add the Zephyr package and create the project
+     find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+     project(my_test_project)
+
+     zephyr_include_directories(../../inc)
+
+     target_sources(app PRIVATE src/test_cases.cpp
+         ../../src/file_to_test.c
+     )
+   #+END_EXAMPLE
+
+** Test case specification
+   Each test project is also required to have a 'testcase.yaml' file for Twister to use.
+   In this file the harness is set to process doctest test results.
+   Example 'testcase.yaml':
+   #+BEGIN_SRC yaml 
+     tests:
+       testing.my_test_project:
+         # TODO filter: CONFIG_DOCTEST
+         tags: tests
+         harness: console
+         harness_config:
+           type: one_line
+           regex: 
+             - "Status: SUCCESS!"
+             #- "[0-9]+ Tests 0 Failures [0-9]+ Ignored" # for older doctest versions
+         integration_platforms:
+           - native_posix
+   #+END_SRC
+
+* Example test case
+Here is an example 'main.cpp' file that runs doctest test cases:
+#+BEGIN_SRC c++
+  #include "doctest.h"
+  #include <zephyr/logging/log.h>
+  LOG_MODULE_REGISTER(yolo);
+
+  TEST_CASE("yolo_test_case") {
+    CHECK(1);
+  }
+#+END_SRC
+
+* Example Twister (test runner) usage
+The Twister script can be invoked on a particular test project:
+#+BEGIN_EXAMPLE
+west twister -W -p native_posix -T tests/
+#+END_EXAMPLE
+or for older zephyr versions:
+#+BEGIN_EXAMPLE
+path-to-zephyr/scripts/twister -W -p native_posix -T tests/
+#+END_EXAMPLE
+Where:
+  - '-W' allows the tets to run even if there are warnings.
+  - '-p' specifies the board used to run the tests
+  - '-T' specifies the path to the test project
+Note that the 'tests/' folder can actually contain multiple test projects that Twister will recursively search and execute.
+
+The test output is contained in the 'twister-out' folder.
+A numerical indicator will be appended to the test output folder name for subsequent test runs.
+
+The actual test case output can be found at 'twister-out/twister.log'.
+Compilation errors will be logged to 'twister-out/[board name]/[test project name]/testing.[test project name]/build.log'.
+
+For more information on Twister, see its [[https://docs.zephyrproject.org/latest/develop/test/twister.html][documentation]]
+
+* Incomplete functionality
+The following "todo" items are currently on the roadmap:
+  + The doctest Twister harness does not yet quickly handle test case errors.
+    The timeout period has to be reached before the test returns a failure.
+  + The doctest module is currently not tracking the master branch but instead a particular release (see the west.yml in this project).
+    This makes precise reproducability easy but doctest is not automatically kept up to date without minimal intervention.
+    This is done because historically the doctest output has changed, and such a change may break the harness.
+  + C++ exceptions are currently enabled in the Kconfig, but this functionality should be optional.
+  + In the west.yml submanifest for this project, the doctest module is placed in '${ZEPHYR_BASE}/../modules/lib'.
+    If a custom parent manifest has a different structure, the doctest module path in "doctest_zephyr" would have to be manually overwritten.
+
+* Additional notes
+  + The 'main' function is being used by the doctest wrapper.
+    The commandline arguments provided are currently hard coded.
+    Be advised that older versions of zephyr required a signature of "void main(void)".
+    The main 'void' return signature for these older versions can be enabled with CONFIG_DOCTEST_MAIN_VOID_RETURN=y
+  + Currently the Twister harness is set to run on native_posix boards.
+    There is, however, nothing that would prevent you from running doctest tests on actual hardware.
+    The user will be responsible for the Twister harness feeding the test result output back to Twister.
+    This harness functionality is not currently implemented within "doctest_zephyr", but may be a project extension in the future.
+ 
+* License
+Copyright (c) 2023, MIT License
