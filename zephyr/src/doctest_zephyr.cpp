@@ -6,6 +6,7 @@
 #define DOCTEST_THREAD_LOCAL
 #include "doctest.h"
 
+extern "C"
 #ifdef CONFIG_DOCTEST_MAIN_VOID_RETURN
 void main(void)
 #else // CONFIG_DOCTEST_MAIN_VOID_RETURN
