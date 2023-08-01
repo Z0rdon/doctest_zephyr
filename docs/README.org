@@ -61,7 +61,7 @@ The doctest framework is able to be updated because doctest itself is brought in
            import: true
 
          - name: doctest_zephyr
-           revision: v1.0.0
+           revision: v1.0.1
            import: true
            remote: space-wizard
            path: yolo_manifest/drivers/doctest_zephyr
@@ -143,7 +143,7 @@ tests/
    #+END_SRC
 
 * Example test case
-Here is an example 'main.cpp' file that runs doctest test cases:
+Here is an example 'test_cases.cpp' file that runs doctest test cases:
 #+BEGIN_SRC c++
   #include "doctest.h"
   #include <zephyr/logging/log.h>
@@ -164,7 +164,7 @@ or for older zephyr versions:
 path-to-zephyr/scripts/twister -W -p native_posix -T tests/
 #+END_EXAMPLE
 Where:
-  - '-W' allows the tets to run even if there are warnings.
+  - '-W' allows the tests to run even if there are warnings.
   - '-p' specifies the board used to run the tests
   - '-T' specifies the path to the test project
 Note that the 'tests/' folder can actually contain multiple test projects that Twister will recursively search and execute.
@@ -176,6 +176,16 @@ The actual test case output can be found at 'twister-out/twister.log'.
 Compilation errors will be logged to 'twister-out/[board name]/[test project name]/testing.[test project name]/build.log'.
 
 For more information on Twister, see its [[https://docs.zephyrproject.org/latest/develop/test/twister.html][documentation]]
+
+* Rapid testing iteration
+While Twister is a great tool for CI, the test execution feedback loop can be slow (due to pristine building).
+Thankfully, the use of Twister is not required for test execution.
+If one is writing tests as part of Test Driven Development on a Linux host, the following procedure might be advantageous:
+  1. In your shell, navigate directly to the test project folder.
+  2. Execute: west build [-p] -b native_posix
+     (allowing the user to selectively enable/disable the pristine option)
+  3. Execute build/zephyr/zephyr.exe, and manually review the output.
+The zephyr.exe native_posix program can also be debugged using gdb.
 
 * Incomplete functionality
 The following "todo" items are currently on the roadmap:
