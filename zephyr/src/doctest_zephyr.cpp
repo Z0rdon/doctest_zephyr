@@ -1,16 +1,24 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 
 
-//#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+// Doctest configuration --------------------
 #define DOCTEST_CONFIG_IMPLEMENT
 #define DOCTEST_THREAD_LOCAL
+
+#ifdef CONFIG_DOCTEST_USE_EXCEPTIONS
+#else // CONFIG_DOCTEST_USE_EXCEPTIONS
+#define DOCTEST_CONFIG_NO_EXCEPTIONS
+#endif // CONFIG_DOCTEST_USE_EXCEPTIONS
+
+// Includes --------------------
 #include "doctest.h"
 
+// Implementations --------------------
 extern "C"
 #ifdef CONFIG_DOCTEST_MAIN_VOID_RETURN
 void main(void)
 #else // CONFIG_DOCTEST_MAIN_VOID_RETURN
-int main(void)
+  int main(void)
 #endif // CONFIG_DOCTEST_MAIN_VOID_RETURN
 {
   const int argc_ = 3;

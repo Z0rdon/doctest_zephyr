@@ -191,10 +191,6 @@ The zephyr.exe native_posix program can also be debugged using gdb.
 The following "todo" items are currently on the roadmap:
   + The doctest Twister harness does not yet quickly handle test case errors.
     The timeout period has to be reached before the test returns a failure.
-  + The doctest module is currently not tracking the master branch but instead a particular release (see the west.yml in this project).
-    This makes precise reproducability easy but doctest is not automatically kept up to date without minimal intervention.
-    This is done because historically the doctest output has changed, and such a change may break the harness.
-  + C++ exceptions are currently enabled in the Kconfig, but this functionality should be optional.
   + In the west.yml submanifest for this project, the doctest module is placed in '${ZEPHYR_BASE}/../modules/lib'.
     If a custom parent manifest has a different structure, the doctest module path in "doctest_zephyr" would have to be manually overwritten.
 
@@ -207,6 +203,11 @@ The following "todo" items are currently on the roadmap:
     There is, however, nothing that would prevent you from running doctest tests on actual hardware.
     The user will be responsible for the Twister harness feeding the test result output back to Twister.
     This harness functionality is not currently implemented within "doctest_zephyr", but may be a project extension in the future.
- 
+  + doctest functionality that requires C++ exceptions is not enabled by default in the Kconfig.
+    To enable doctest 'exception' usage, set 'CONFIG_DOCTEST_USE_EXCEPTIONS=y'.
+  + The doctest module is currently not tracking the master branch but instead a particular release (see the west.yml in this project).
+    This makes precise reproducability easy but doctest is not automatically kept up to date without minimal intervention.
+    This is done because historically the doctest output has changed, and such a change may break the harness.
+
 * License
 Copyright (c) 2023, MIT License

@@ -7,12 +7,19 @@ config DOCTEST
 	default y
   select CPLUSPLUS
   select LIB_CPLUSPLUS
-  select EXCEPTIONS
 	help
 	  Enable the doctest unit testing framework (requires cpp).
 
 config DOCTEST_MAIN_VOID_RETURN
 	bool "Use a void return from main for doctest"
 	default n
+  depends on DOCTEST
 	help
 	  Older versions of zephyr required a void return from main.
+
+config DOCTEST_USE_EXCEPTIONS
+  bool "Enable C++ doctest exception functionality"
+  default n
+  depends on (DOCTEST && EXCEPTIONS)
+  help
+    Enable C++ exceptions and allow doctest exception functionality
