@@ -46,7 +46,20 @@ The doctest framework is able to be updated because doctest itself is brought in
 * Configuring a test project
 ** Integration of doctest_zephyr into your custom zephyr manifest
    Here is an example parent manifest west.yml, where the doctest_zephyr submanifest is imported to bring in the doctest module.
-   #+BEGIN_SRC yaml
+   #+NAME: project-version
+   #+BEGIN_SRC python :exports none
+     import subprocess 
+
+     versionCommand = "git describe --tags --abbrev"
+     versionProcess = versionCommand.split(' ')
+     process = subprocess.Popen(versionProcess, stdout=subprocess.PIPE)
+     gitResult = process.stdout.read()
+     gitResultString = gitResult.decode("utf-8")
+     gitTag = gitResultString.split('-')[0]
+     return gitTag
+   #+END_SRC
+   
+   #+BEGIN_SRC yaml :noweb yes
      manifest:
        remotes:
          - name: zephyrproject-rtos
@@ -61,7 +74,7 @@ The doctest framework is able to be updated because doctest itself is brought in
            import: true
 
          - name: doctest_zephyr
-           revision: v1.0.1
+           revision: <<project-version()>>
            import: true
            remote: space-wizard
            path: yolo_manifest/drivers/doctest_zephyr
@@ -193,10 +206,10 @@ The following "todo" items are currently on the roadmap:
     The timeout period has to be reached before the test returns a failure.
   + In the west.yml submanifest for this project, the doctest module is placed in '${ZEPHYR_BASE}/../modules/lib'.
     If a custom parent manifest has a different structure, the doctest module path in "doctest_zephyr" would have to be manually overwritten.
+  + The commandline arguments provided to the doctest 'main' are currently hard coded.
 
 * Additional notes
   + The 'main' function is being used by the doctest wrapper.
-    The commandline arguments provided are currently hard coded.
     Be advised that older versions of zephyr required a signature of "void main(void)".
     The main 'void' return signature for these older versions can be enabled with CONFIG_DOCTEST_MAIN_VOID_RETURN=y
   + Currently the Twister harness is set to run on native_posix boards.
