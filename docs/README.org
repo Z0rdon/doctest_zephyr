@@ -191,8 +191,10 @@ Compilation errors will be logged to 'twister-out/[board name]/[test project nam
 For more information on Twister, see its [[https://docs.zephyrproject.org/latest/develop/test/twister.html][documentation]]
 
 * Rapid testing iteration
-While Twister is a great tool for CI, the test execution feedback loop can be slow (due to pristine building).
-Thankfully, the use of Twister is not required for test execution.
+Twister is a great tool for CI. Be advised that the test execution feedback loop can be slow by default (due to pristine building).
+For incremental builds, pass the '-n' option to the Twister invocation.
+
+Note that the use of Twister is not required for test execution.
 If one is writing tests as part of Test Driven Development on a Linux host, the following procedure might be advantageous:
   1. In your shell, navigate directly to the test project folder.
   2. Execute: west build [-p] -b native_posix
