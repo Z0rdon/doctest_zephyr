@@ -4,7 +4,7 @@
 
 config DOCTEST
 	bool "Doctest unit testing framework"
-	default y
+	default n
   select CPLUSPLUS
   select LIB_CPLUSPLUS
 	help
